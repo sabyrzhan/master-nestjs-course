@@ -19,7 +19,7 @@ import * as process from 'process';
       database: process.env['DB_NAME'],
       entities: [Event],
       synchronize: process.env['DB_SYNCHRONIZE'] === 'true',
-      logging: ['query', 'error'],
+      logging: ['error'],
     }),
     EventsModule,
   ],
