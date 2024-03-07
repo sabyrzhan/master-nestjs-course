@@ -14,19 +14,42 @@ import {
 import { CreateEventDTO } from './dto/CreateEventDTO';
 import { UpdateEventDTO } from './dto/UpdateEventDTO';
 import { Event } from './entity/Event';
+import { Between, Like, MoreThan, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Controller('/events')
 export class EventsController {
-  private events: Event[] = [];
+  constructor(
+    @InjectRepository(Event) private readonly repository: Repository<Event>,
+  ) {}
 
   @Get()
   findAll() {
-    return this.events;
+    return this.repository.find();
+  }
+
+  @Get('/practice')
+  async practice() {
+    return this.repository.find({
+      select: ['id', 'name'],
+      where: [
+        {
+          id: MoreThan(3),
+          when: Between(new Date('2020-01-01'), new Date('2023-02-15')),
+        },
+        {
+          description: Like('%TRY TO SELL%'),
+        },
+      ],
+      order: {
+        description: 'asc',
+      },
+    });
   }
 
   @Get('/:id')
-  findOne(@Param('id', new ParseIntPipe()) id: number) {
-    const event = this.events.find((value) => value.id == id);
+  async findOne(@Param('id', new ParseIntPipe()) id: number) {
+    const event = await this.repository.findOneBy({ id: id });
 
     if (!event) {
       throw new NotFoundException('Event not found');
@@ -40,39 +63,33 @@ export class EventsController {
     const newEvent: Event = {
       ...data,
       when: new Date(data.when),
-      id: Date.now(),
+      id: Math.floor(Date.now() / 1000),
     };
-    this.events.push(newEvent);
 
-    return newEvent;
+    return this.repository.save(newEvent);
   }
 
   @Patch('/:id')
-  update(
+  async update(
     @Param('id', new ParseIntPipe()) id: number,
     @Body() data: UpdateEventDTO,
   ) {
-    const index = this.events.findIndex((value) => value.id === id);
-    if (index < 0) {
+    let entity = await this.repository.findOneBy({ id: id });
+    if (!entity) {
       throw new NotFoundException('Event not found');
     }
-    this.events[index] = {
-      ...this.events[index],
+    entity = {
+      ...entity,
       ...data,
-      when: data.when ? new Date(data.when) : this.events[index].when,
+      when: data.when ? new Date(data.when) : entity.when,
     };
 
-    return this.events[index];
+    return this.repository.save(entity);
   }
 
   @Delete('/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', new ParseIntPipe()) id: number) {
-    const index = this.events.findIndex((value) => value.id === id);
-    if (index < 0) {
-      throw new NotFoundException('Event not found');
-    }
-
-    this.events.splice(index, 1);
+    this.repository.delete(id);
   }
 }

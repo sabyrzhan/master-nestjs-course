@@ -1,9 +1,15 @@
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+@Entity()
 export class Event {
-  constructor(
-    public id: number,
-    public name: string,
-    public description: string,
-    public when: Date,
-    public address: string,
-  ) {}
+  @PrimaryGeneratedColumn()
+  public id: number;
+  @Column()
+  public name: string;
+  @Column()
+  public description: string;
+  @Column()
+  public when: Date;
+  @Column()
+  public address: string;
 }
