@@ -11,12 +11,16 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { CreateEventDTO } from './dto/CreateEventDTO';
 import { UpdateEventDTO } from './dto/UpdateEventDTO';
 import { Event } from './entity/Event';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventsService } from './service/EventsService';
+import { Attendee, AttendeeAnswerEnum } from './entity/Attendee';
+import { ListEvents } from './dto/ListEvents';
 
 @Controller('/events')
 export class EventsController {
@@ -24,12 +28,14 @@ export class EventsController {
 
   constructor(
     @InjectRepository(Event) private readonly repository: Repository<Event>,
+    private readonly service: EventsService,
   ) {}
 
   @Get()
-  async findAll() {
-    this.logger.log('start: findAll()');
-    const events = await this.repository.find();
+  async findAll(@Query() filter: ListEvents) {
+    this.logger.log(`start: findAll(filter=${JSON.stringify(filter)})`);
+    const events =
+      await this.service.getEventsWithAttendeeCountFiltered(filter);
     this.logger.log(`end: findAll(): result=${events.length}`);
     return events;
   }
@@ -37,23 +43,40 @@ export class EventsController {
   @Get('/:id')
   async findOne(@Param('id', new ParseIntPipe()) id: number) {
     this.logger.log(`start: findOne(id=${id})`);
-    const event = await this.repository.findOneBy({ id: id });
+    const event = await this.service.getEvent(id);
 
     if (!event) {
       this.logger.error(`Event with id=${id} not found`);
       throw new NotFoundException('Event not found');
     }
 
-    this.logger.log(`end: findOne(id=${id}): result=${event}`);
+    this.logger.log(`end: findOne(id=${id}): result=${JSON.stringify(event)}`);
 
     return event;
+  }
+
+  @Post('/testCreate')
+  async testCreate() {
+    const newEvent = new Event();
+    newEvent.name = 'Test event';
+    newEvent.description = 'Test event description';
+    newEvent.address = 'Test event address';
+    newEvent.when = new Date();
+
+    const attendee = new Attendee();
+    attendee.name = 'Attendee 1';
+    attendee.answer = AttendeeAnswerEnum.Rejected;
+
+    newEvent.attendees = [attendee];
+
+    await this.repository.save(newEvent);
   }
 
   @Post()
   async create(@Body() data: CreateEventDTO) {
     this.logger.log(`start: create(data): ${data}`);
 
-    const newEvent: Event = {
+    const newEvent = {
       ...data,
       when: new Date(data.when),
       id: Math.floor(Date.now() / 1000),

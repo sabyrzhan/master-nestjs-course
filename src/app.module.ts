@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Event } from './events/entity/Event';
 import { EventsModule } from './events/events.module';
 import { ConfigModule } from '@nestjs/config';
 import * as process from 'process';
+import { SchoolModule } from './school/school.module';
 
 @Module({
   imports: [
@@ -17,11 +17,11 @@ import * as process from 'process';
       username: process.env['DB_USERNAME'],
       password: process.env['DB_PASSWORD'],
       database: process.env['DB_NAME'],
-      entities: [Event],
       synchronize: process.env['DB_SYNCHRONIZE'] === 'true',
-      logging: ['error'],
+      autoLoadEntities: true,
     }),
     EventsModule,
+    SchoolModule,
   ],
   controllers: [AppController],
   providers: [AppService],
