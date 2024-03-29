@@ -13,9 +13,7 @@ export class Event {
   public when: Date;
   @Column()
   public address: string;
-  @OneToMany(() => Attendee, (attendee: Attendee) => attendee.event, {
-    cascade: true,
-  })
+  @OneToMany(() => Attendee, (attendee: Attendee) => attendee.event)
   public attendees: Attendee[];
 
   public attendeeCount?: number;

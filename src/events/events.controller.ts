@@ -124,9 +124,12 @@ export class EventsController {
 
   @Delete('/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', new ParseIntPipe()) id: number) {
+  async remove(@Param('id', new ParseIntPipe()) id: number) {
     this.logger.log(`start: remove(id=${id})`);
-    this.repository.delete(id);
+    const result = await this.service.deleteEvent(id);
+    if (result?.affected !== 1) {
+      throw new NotFoundException();
+    }
     this.logger.log(`end: remove(id=${id})`);
   }
 }
