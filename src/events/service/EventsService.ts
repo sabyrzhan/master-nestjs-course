@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable, Logger } from '@nestjs/common';
 import { AttendeeAnswerEnum } from '../entity/Attendee';
 import { ListEvents, WhenEventFilter } from '../dto/ListEvents';
+import { paginate, PaginateOptions } from '../pagination/paginator';
 
 @Injectable()
 export class EventsService {
@@ -25,13 +26,55 @@ export class EventsService {
     return query.getOne();
   }
 
-  public async getEventsWithAttendeeCountFiltered(
+  public async getEventsWithAttendeeCountFilteredPaginated(
+    filter: ListEvents,
+    paginateOptions: PaginateOptions,
+  ) {
+    return await paginate(
+      this.getEventsWithAttendeeCountFiltered(filter),
+      paginateOptions,
+    );
+  }
+
+  public getEventsWithAttendeeCountQuery(): SelectQueryBuilder<Event> {
+    return this.getEventsBaseQuery()
+      .loadRelationCountAndMap('e.attendeeCount', 'e.attendees')
+      .loadRelationCountAndMap(
+        'e.attendeeRejected',
+        'e.attendees',
+        'attendee',
+        (qb) =>
+          qb.where('attendee.answer = :answer', {
+            answer: AttendeeAnswerEnum.Rejected,
+          }),
+      )
+      .loadRelationCountAndMap(
+        'e.attendeeMaybe',
+        'e.attendees',
+        'attendee',
+        (qb) =>
+          qb.where('attendee.answer = :answer', {
+            answer: AttendeeAnswerEnum.Maybe,
+          }),
+      )
+      .loadRelationCountAndMap(
+        'e.attendeeAccepted',
+        'e.attendees',
+        'attendee',
+        (qb) =>
+          qb.where('attendee.answer = :answer', {
+            answer: AttendeeAnswerEnum.Accepted,
+          }),
+      );
+  }
+
+  private getEventsWithAttendeeCountFiltered(
     filter?: ListEvents,
-  ): Promise<Event[]> {
+  ): SelectQueryBuilder<Event> {
     let query = this.getEventsWithAttendeeCountQuery();
     if (!filter) {
       this.logger.debug('Filter not defined returning all');
-      return query.getMany();
+      return query;
     }
 
     if (filter.when) {
@@ -65,39 +108,7 @@ export class EventsService {
 
     this.logger.debug(`Query: ${query.getSql()}`);
 
-    return await query.getMany();
-  }
-
-  public getEventsWithAttendeeCountQuery(): SelectQueryBuilder<Event> {
-    return this.getEventsBaseQuery()
-      .loadRelationCountAndMap('e.attendeeCount', 'e.attendees')
-      .loadRelationCountAndMap(
-        'e.attendeeRejected',
-        'e.attendees',
-        'attendee',
-        (qb) =>
-          qb.where('attendee.answer = :answer', {
-            answer: AttendeeAnswerEnum.Rejected,
-          }),
-      )
-      .loadRelationCountAndMap(
-        'e.attendeeMaybe',
-        'e.attendees',
-        'attendee',
-        (qb) =>
-          qb.where('attendee.answer = :answer', {
-            answer: AttendeeAnswerEnum.Maybe,
-          }),
-      )
-      .loadRelationCountAndMap(
-        'e.attendeeAccepted',
-        'e.attendees',
-        'attendee',
-        (qb) =>
-          qb.where('attendee.answer = :answer', {
-            answer: AttendeeAnswerEnum.Accepted,
-          }),
-      );
+    return query;
   }
 
   private getEventsBaseQuery(): SelectQueryBuilder<Event> {
