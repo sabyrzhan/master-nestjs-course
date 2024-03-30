@@ -5,6 +5,7 @@ import { Subject } from './subject.entity';
 import { Teacher } from './teacher.entity';
 import { User } from '../auth/entity/User';
 import { Profile } from '../auth/entity/Profile';
+import { hash } from 'bcrypt';
 
 @Controller('school')
 export class TrainingController {
@@ -98,7 +99,7 @@ export class TrainingController {
     user.username = 'testname';
     user.email = 'testemail@email.com';
     user.firstName = 'Firstname';
-    user.password = 'testpassword';
+    user.password = await hash('123', 10);
     user.lastName = 'Lastname';
     const profile = new Profile();
     profile.age = 20;

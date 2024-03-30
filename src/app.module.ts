@@ -12,6 +12,7 @@ import { Teacher } from './school/teacher.entity';
 import { Subject } from './school/subject.entity';
 import { Profile } from './auth/entity/Profile';
 import { User } from './auth/entity/User';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { User } from './auth/entity/User';
       entities: [Attendee, Event, Subject, Teacher, Profile, User],
       autoLoadEntities: true,
     }),
+    AuthModule,
     EventsModule,
     SchoolModule,
   ],
