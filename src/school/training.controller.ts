@@ -1,8 +1,10 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subject } from './subject.entity';
 import { Teacher } from './teacher.entity';
+import { User } from '../auth/entity/User';
+import { Profile } from '../auth/entity/Profile';
 
 @Controller('school')
 export class TrainingController {
@@ -11,6 +13,10 @@ export class TrainingController {
     private readonly subjectRepository: Repository<Subject>,
     @InjectRepository(Teacher)
     private readonly teacherRepository: Repository<Teacher>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
   ) {}
 
   @Post('/create')
@@ -84,5 +90,40 @@ export class TrainingController {
       .set({ name: 'temp' })
       .where('name = "Math2"')
       .execute();
+  }
+
+  @Post('/createUser')
+  async createUser() {
+    const user = new User();
+    user.username = 'testname';
+    user.email = 'testemail@email.com';
+    user.firstName = 'Firstname';
+    user.password = 'testpassword';
+    user.lastName = 'Lastname';
+    const profile = new Profile();
+    profile.age = 20;
+    profile.user = user;
+    user.profile = profile;
+    await this.userRepository.save(user);
+  }
+
+  @Get('/getUser')
+  async getUser() {
+    return this.userRepository.findOne({
+      where: { id: 11 },
+      relations: ['profile'],
+    });
+  }
+
+  @Post('/deleteUser/:id')
+  async deleteUser(@Param('id', new ParseIntPipe()) id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: id },
+      relations: ['profile'],
+    });
+    if (user) {
+      await this.userRepository.delete(user);
+      // await this.profileRepository.delete(user.profile);
+    }
   }
 }

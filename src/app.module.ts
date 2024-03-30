@@ -6,6 +6,12 @@ import { EventsModule } from './events/events.module';
 import { ConfigModule } from '@nestjs/config';
 import * as process from 'process';
 import { SchoolModule } from './school/school.module';
+import { Attendee } from './events/entity/Attendee';
+import { Event } from './events/entity/Event';
+import { Teacher } from './school/teacher.entity';
+import { Subject } from './school/subject.entity';
+import { Profile } from './auth/entity/Profile';
+import { User } from './auth/entity/User';
 
 @Module({
   imports: [
@@ -18,6 +24,7 @@ import { SchoolModule } from './school/school.module';
       password: process.env['DB_PASSWORD'],
       database: process.env['DB_NAME'],
       synchronize: process.env['DB_SYNCHRONIZE'] === 'true',
+      entities: [Attendee, Event, Subject, Teacher, Profile, User],
       autoLoadEntities: true,
     }),
     EventsModule,
