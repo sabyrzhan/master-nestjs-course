@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entity/User';
 import { LocalStrategy } from './strategies/local.strategy';
-import { AuthController } from './auth.controller';
+import { AuthController } from './controllers/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import * as process from 'process';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { UsersController } from './controllers/users.controller';
 
 @Module({
   imports: [
@@ -21,6 +22,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     }),
   ],
   providers: [LocalStrategy, JwtStrategy, AuthService],
-  controllers: [AuthController],
+  controllers: [AuthController, UsersController],
 })
 export class AuthModule {}
