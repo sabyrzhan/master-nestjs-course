@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -12,8 +13,10 @@ import {
   Patch,
   Post,
   Query,
+  SerializeOptions,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -30,6 +33,7 @@ import { User } from '../auth/entity/User';
 import { AuthGuardJwt } from '../auth/auth-guard.jwt';
 
 @Controller('/events')
+@SerializeOptions({ strategy: 'excludeAll' })
 export class EventsController {
   private readonly logger = new Logger(EventsController.name);
 
@@ -40,6 +44,7 @@ export class EventsController {
 
   @Get()
   @UsePipes(new ValidationPipe({ transform: true }))
+  @UseInterceptors(ClassSerializerInterceptor)
   async findAll(@Query() filter: ListEvents) {
     this.logger.log(`start: findAll(filter=${JSON.stringify(filter)})`);
     const events =
@@ -53,6 +58,7 @@ export class EventsController {
   }
 
   @Get('/:id')
+  @UseInterceptors(ClassSerializerInterceptor)
   async findOne(@Param('id', new ParseIntPipe()) id: number) {
     this.logger.log(`start: findOne(id=${id})`);
     const event = await this.service.getEvent(id);
