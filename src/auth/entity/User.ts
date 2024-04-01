@@ -2,10 +2,12 @@ import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Profile } from './Profile';
+import { Event } from '../../events/entity/Event';
 
 @Entity()
 export class User {
@@ -28,4 +30,7 @@ export class User {
   })
   @JoinColumn({ name: 'profile_id' })
   profile: Profile;
+
+  @OneToMany(() => Event, (event) => event.organizer)
+  organized: Event[];
 }

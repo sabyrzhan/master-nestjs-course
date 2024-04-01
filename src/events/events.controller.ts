@@ -12,6 +12,8 @@ import {
   Patch,
   Post,
   Query,
+  UnauthorizedException,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -23,6 +25,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EventsService } from './service/EventsService';
 import { Attendee, AttendeeAnswerEnum } from './entity/Attendee';
 import { ListEvents } from './dto/ListEvents';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../auth/entity/User';
+import { AuthGuardJwt } from '../auth/auth-guard.jwt';
 
 @Controller('/events')
 export class EventsController {
@@ -80,16 +85,11 @@ export class EventsController {
   }
 
   @Post()
-  async create(@Body() data: CreateEventDTO) {
+  @UseGuards(AuthGuardJwt)
+  async create(@Body() data: CreateEventDTO, @CurrentUser() user: User) {
     this.logger.log(`start: create(data): ${data}`);
 
-    const newEvent = {
-      ...data,
-      when: new Date(data.when),
-      id: Math.floor(Date.now() / 1000),
-    };
-
-    const result = await this.repository.save(newEvent);
+    const result = await this.service.createEvent(data, user);
 
     this.logger.log(`end: create(data): result=${JSON.stringify(result)}`);
 
@@ -97,25 +97,15 @@ export class EventsController {
   }
 
   @Patch('/:id')
+  @UseGuards(AuthGuardJwt)
   async update(
     @Param('id', new ParseIntPipe()) id: number,
     @Body() data: UpdateEventDTO,
+    @CurrentUser() user: User,
   ) {
     this.logger.log(`start: update(id=${id}`);
-    let entity = await this.repository.findOneBy({ id: id });
-    if (!entity) {
-      this.logger.error(`Event with id=${id} not found`);
-      throw new NotFoundException('Event not found');
-    }
-    entity = {
-      ...entity,
-      ...data,
-      when: data.when ? new Date(data.when) : entity.when,
-    };
 
-    this.logger.debug(`The updated event data=${JSON.stringify(entity)}`);
-
-    const result = await this.repository.save(entity);
+    const result = await this.service.updateEvent(id, data, user);
 
     this.logger.log(`end: update(id): result=${JSON.stringify(result)}`);
 
@@ -124,8 +114,21 @@ export class EventsController {
 
   @Delete('/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id', new ParseIntPipe()) id: number) {
+  @UseGuards(AuthGuardJwt)
+  async remove(
+    @Param('id', new ParseIntPipe()) id: number,
+    @CurrentUser() user: User,
+  ) {
     this.logger.log(`start: remove(id=${id})`);
+    const event = await this.service.getEvent(id);
+    if (!event) {
+      throw new NotFoundException();
+    }
+
+    if (event.organizer.id !== user.id) {
+      throw new UnauthorizedException('You are not authorized to delete');
+    }
+
     const result = await this.service.deleteEvent(id);
     if (result?.affected !== 1) {
       throw new NotFoundException();

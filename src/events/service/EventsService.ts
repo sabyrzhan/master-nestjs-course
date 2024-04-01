@@ -1,10 +1,18 @@
 import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
 import { Event } from '../entity/Event';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { AttendeeAnswerEnum } from '../entity/Attendee';
 import { ListEvents, WhenEventFilter } from '../dto/ListEvents';
 import { paginate, PaginateOptions } from '../pagination/paginator';
+import { CreateEventDTO } from '../dto/CreateEventDTO';
+import { User } from '../../auth/entity/User';
+import { UpdateEventDTO } from '../dto/UpdateEventDTO';
 
 @Injectable()
 export class EventsService {
@@ -16,10 +24,9 @@ export class EventsService {
   ) {}
 
   public async getEvent(id: number): Promise<Event | undefined> {
-    const query = this.getEventsWithAttendeeCountQuery().andWhere(
-      'e.id = :id',
-      { id },
-    );
+    const query = this.getEventsWithAttendeeCountQuery()
+      .andWhere('e.id = :id', { id })
+      .leftJoinAndSelect('e.organizer', 'o');
 
     this.logger.debug(query.getSql());
 
@@ -74,6 +81,50 @@ export class EventsService {
       .delete()
       .where('id = :id', { id })
       .execute();
+  }
+
+  public async createEvent(
+    dto: CreateEventDTO,
+    organizer: User,
+  ): Promise<Event> {
+    const newEvent = {
+      ...dto,
+      when: new Date(dto.when),
+      organizer,
+    };
+
+    return await this.eventsRepository.save(newEvent);
+  }
+
+  public async updateEvent(
+    id: number,
+    dto: UpdateEventDTO,
+    organizer: User,
+  ): Promise<Event> {
+    let entity = await this.eventsRepository.findOne({
+      where: { id: id },
+      relations: ['organizer'],
+    });
+    if (!entity) {
+      this.logger.error(`Event with id=${id} not found`);
+      throw new NotFoundException('Event not found');
+    }
+
+    if (entity.organizer.id !== organizer.id) {
+      throw new ForbiddenException(
+        'You are not authorized to change this event',
+      );
+    }
+
+    entity = {
+      ...entity,
+      ...dto,
+      when: dto.when ? new Date(dto.when) : entity.when,
+    };
+
+    this.logger.debug(`The updated event data=${JSON.stringify(entity)}`);
+
+    return await this.eventsRepository.save(entity);
   }
 
   private getEventsWithAttendeeCountFiltered(
