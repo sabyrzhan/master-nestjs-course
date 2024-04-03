@@ -1,5 +1,5 @@
 import { DeleteResult, Repository, SelectQueryBuilder } from 'typeorm';
-import { Event } from '../entity/Event';
+import { Event, PaginatedEvents } from '../entity/Event';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   ForbiddenException,
@@ -36,7 +36,7 @@ export class EventsService {
   public async getEventsWithAttendeeCountFilteredPaginated(
     filter: ListEvents,
     paginateOptions: PaginateOptions,
-  ) {
+  ): Promise<PaginatedEvents> {
     return await paginate(
       this.getEventsWithAttendeeCountFiltered(filter),
       paginateOptions,
@@ -125,6 +125,42 @@ export class EventsService {
     this.logger.debug(`The updated event data=${JSON.stringify(entity)}`);
 
     return await this.eventsRepository.save(entity);
+  }
+
+  public async getEventsOrganizedByUserIdPaginated(
+    userId: number,
+    paginateOptions: PaginateOptions,
+  ): Promise<PaginatedEvents> {
+    return paginate(
+      this.getEventsOrganizedByUserIdQuery(userId),
+      paginateOptions,
+    );
+  }
+
+  public async getEventsAttendedByUserIdPaginated(
+    userId: number,
+    paginateOptions: PaginateOptions,
+  ): Promise<PaginatedEvents> {
+    return paginate(
+      this.getEventsAttendedByUserIdQuery(userId),
+      paginateOptions,
+    );
+  }
+
+  private getEventsOrganizedByUserIdQuery(
+    userId: number,
+  ): SelectQueryBuilder<Event> {
+    return this.getEventsBaseQuery().where('e.organiser_id = :userId', {
+      userId,
+    });
+  }
+
+  private getEventsAttendedByUserIdQuery(
+    userId: number,
+  ): SelectQueryBuilder<Event> {
+    return this.getEventsBaseQuery()
+      .leftJoinAndSelect('e.attendees', 'a')
+      .where('a.user_id', { userId });
   }
 
   private getEventsWithAttendeeCountFiltered(
