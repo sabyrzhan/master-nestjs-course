@@ -18,6 +18,8 @@ import { CreateAttendeeDTO } from './dto/CreateAttendeeDTO';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../auth/entity/User';
 import { AuthGuardJwt } from '../auth/auth-guard.jwt';
+import { PaginatedEvents } from './entity/Event';
+import { Attendee } from './entity/Attendee';
 
 @Controller('events-attendance')
 @SerializeOptions({ strategy: 'excludeAll' })
@@ -32,8 +34,8 @@ export class CurrentUserEventAttendanceController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async findAll(
     @CurrentUser() user: User,
-    @Query('page') page: number = 1,
-  ) {
+    @Query('page', ParseIntPipe) page: number = 1,
+  ): Promise<PaginatedEvents> {
     return this.eventsService.getEventsAttendedByUserIdPaginated(user.id, {
       currentPage: page,
       limit: 5,
@@ -46,7 +48,7 @@ export class CurrentUserEventAttendanceController {
   public async findOne(
     @Param('eventId', ParseIntPipe) eventId: number,
     @CurrentUser() user: User,
-  ) {
+  ): Promise<Attendee> {
     const attendee = await this.attendeesService.findOneByEventIdAndUserId(
       eventId,
       user.id,
@@ -66,7 +68,7 @@ export class CurrentUserEventAttendanceController {
     @Param('eventId', ParseIntPipe) eventId: number,
     @Body() input: CreateAttendeeDTO,
     @CurrentUser() user: User,
-  ) {
+  ): Promise<Attendee> {
     return this.attendeesService.createOrUpdate(input, eventId, user.id);
   }
 }

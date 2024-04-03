@@ -7,6 +7,7 @@ import { EventsService } from './service/EventsService';
 import { AttendeesService } from './service/AttendeesService';
 import { CurrentUserEventAttendanceController } from './current-user-event-attendance-controller';
 import { EventAttendeesController } from './event-attendees.controller';
+import { EventsOrganizerByUserController } from './events-organizer-by-user.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Event, Attendee])],
@@ -14,6 +15,7 @@ import { EventAttendeesController } from './event-attendees.controller';
     EventsController,
     CurrentUserEventAttendanceController,
     EventAttendeesController,
+    EventsOrganizerByUserController,
   ],
   providers: [EventsService, AttendeesService],
 })

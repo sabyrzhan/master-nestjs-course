@@ -36,6 +36,9 @@ export class Event {
   @Expose()
   public organizer: User;
 
+  @Column({ name: 'organizer_id' })
+  public organizerId: number;
+
   public attendeeCount?: number;
 
   public attendeeRejected?: number;

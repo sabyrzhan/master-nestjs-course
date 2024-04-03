@@ -23,7 +23,13 @@ export class EventsService {
     private readonly eventsRepository: Repository<Event>,
   ) {}
 
-  public async getEvent(id: number): Promise<Event | undefined> {
+  public async findOne(id: number): Promise<Event | undefined> {
+    return await this.eventsRepository.findOneBy({ id });
+  }
+
+  public async getEventWithAttendeeCount(
+    id: number,
+  ): Promise<Event | undefined> {
     const query = this.getEventsWithAttendeeCountQuery()
       .andWhere('e.id = :id', { id })
       .leftJoinAndSelect('e.organizer', 'o');
@@ -38,7 +44,7 @@ export class EventsService {
     paginateOptions: PaginateOptions,
   ): Promise<PaginatedEvents> {
     return await paginate(
-      this.getEventsWithAttendeeCountFiltered(filter),
+      this.getEventsWithAttendeeCountFilteredQuery(filter),
       paginateOptions,
     );
   }
@@ -101,10 +107,7 @@ export class EventsService {
     dto: UpdateEventDTO,
     organizer: User,
   ): Promise<Event> {
-    let entity = await this.eventsRepository.findOne({
-      where: { id: id },
-      relations: ['organizer'],
-    });
+    let entity = await this.findOne(id);
     if (!entity) {
       this.logger.error(`Event with id=${id} not found`);
       throw new NotFoundException('Event not found');
@@ -163,7 +166,7 @@ export class EventsService {
       .where('a.user_id', { userId });
   }
 
-  private getEventsWithAttendeeCountFiltered(
+  private getEventsWithAttendeeCountFilteredQuery(
     filter?: ListEvents,
   ): SelectQueryBuilder<Event> {
     let query = this.getEventsWithAttendeeCountQuery();
