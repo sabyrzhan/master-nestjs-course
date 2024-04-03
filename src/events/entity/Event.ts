@@ -44,6 +44,10 @@ export class Event {
   public attendeeRejected?: number;
   public attendeeMaybe?: number;
   public attendeeAccepted?: number;
+
+  constructor(partial?: Partial<Event>) {
+    Object.assign(this, partial);
+  }
 }
 
 export type PaginatedEvents = PaginationResult<Event>;

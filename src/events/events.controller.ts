@@ -91,6 +91,7 @@ export class EventsController {
 
   @Post()
   @UseGuards(AuthGuardJwt)
+  @UseInterceptors(ClassSerializerInterceptor)
   async create(
     @Body() data: CreateEventDTO,
     @CurrentUser() user: User,
@@ -106,6 +107,7 @@ export class EventsController {
 
   @Patch('/:id')
   @UseGuards(AuthGuardJwt)
+  @UseInterceptors(ClassSerializerInterceptor)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() data: UpdateEventDTO,

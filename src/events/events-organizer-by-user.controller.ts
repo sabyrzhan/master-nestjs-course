@@ -1,6 +1,7 @@
 import {
   ClassSerializerInterceptor,
   Controller,
+  DefaultValuePipe,
   Get,
   Param,
   ParseIntPipe,
@@ -20,7 +21,7 @@ export class EventsOrganizerByUserController {
   @UseInterceptors(ClassSerializerInterceptor)
   async findAll(
     @Param('userId', ParseIntPipe) userId: number,
-    @Query('page', ParseIntPipe) page: number,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
   ): Promise<PaginatedEvents> {
     return await this.service.getEventsOrganizedByUserIdPaginated(userId, {
       currentPage: page,

@@ -2,6 +2,7 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  DefaultValuePipe,
   Get,
   NotFoundException,
   Param,
@@ -34,7 +35,7 @@ export class CurrentUserEventAttendanceController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async findAll(
     @CurrentUser() user: User,
-    @Query('page', ParseIntPipe) page: number = 1,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
   ): Promise<PaginatedEvents> {
     return this.eventsService.getEventsAttendedByUserIdPaginated(user.id, {
       currentPage: page,

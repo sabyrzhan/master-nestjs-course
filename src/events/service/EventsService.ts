@@ -93,11 +93,11 @@ export class EventsService {
     dto: CreateEventDTO,
     organizer: User,
   ): Promise<Event> {
-    const newEvent = {
+    const newEvent = new Event({
       ...dto,
       when: new Date(dto.when),
       organizer,
-    };
+    });
 
     return await this.eventsRepository.save(newEvent);
   }
@@ -119,11 +119,11 @@ export class EventsService {
       );
     }
 
-    entity = {
+    entity = new Event({
       ...entity,
       ...dto,
       when: dto.when ? new Date(dto.when) : entity.when,
-    };
+    });
 
     this.logger.debug(`The updated event data=${JSON.stringify(entity)}`);
 
@@ -153,7 +153,7 @@ export class EventsService {
   private getEventsOrganizedByUserIdQuery(
     userId: number,
   ): SelectQueryBuilder<Event> {
-    return this.getEventsBaseQuery().where('e.organiser_id = :userId', {
+    return this.getEventsBaseQuery().where('e.organizer.id = :userId', {
       userId,
     });
   }
