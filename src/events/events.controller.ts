@@ -135,7 +135,7 @@ export class EventsController {
       throw new NotFoundException();
     }
 
-    if (event.organizer.id !== user.id) {
+    if (event.organizerId !== user.id) {
       throw new UnauthorizedException('You are not authorized to delete');
     }
 

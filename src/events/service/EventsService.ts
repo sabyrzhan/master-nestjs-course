@@ -32,7 +32,8 @@ export class EventsService {
   ): Promise<Event | undefined> {
     const query = this.getEventsWithAttendeeCountQuery()
       .andWhere('e.id = :id', { id })
-      .leftJoinAndSelect('e.organizer', 'o');
+      .leftJoinAndSelect('e.organizer', 'o')
+      .leftJoinAndSelect('e.attendees', 'a');
 
     this.logger.debug(query.getSql());
 
@@ -153,9 +154,12 @@ export class EventsService {
   private getEventsOrganizedByUserIdQuery(
     userId: number,
   ): SelectQueryBuilder<Event> {
-    return this.getEventsBaseQuery().where('e.organizer.id = :userId', {
-      userId,
-    });
+    return this.getEventsBaseQuery()
+      .where('e.organizer.id = :userId', {
+        userId,
+      })
+      .leftJoinAndSelect('e.organizer', 'o')
+      .leftJoinAndSelect('e.attendees', 'a');
   }
 
   private getEventsAttendedByUserIdQuery(

@@ -14,6 +14,7 @@ import { Attendee } from '../../events/entity/Attendee';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
+  @Expose()
   id: number;
   @Expose()
   @Column({ unique: true })

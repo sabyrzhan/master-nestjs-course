@@ -12,6 +12,7 @@ import {
   SerializeOptions,
   UseGuards,
   UseInterceptors,
+  ValidationPipe,
 } from '@nestjs/common';
 import { EventsService } from './service/EventsService';
 import { AttendeesService } from './service/AttendeesService';
@@ -67,7 +68,7 @@ export class CurrentUserEventAttendanceController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async createOrUpdate(
     @Param('eventId', ParseIntPipe) eventId: number,
-    @Body() input: CreateAttendeeDTO,
+    @Body(new ValidationPipe({ transform: true })) input: CreateAttendeeDTO,
     @CurrentUser() user: User,
   ): Promise<Attendee> {
     return this.attendeesService.createOrUpdate(input, eventId, user.id);
