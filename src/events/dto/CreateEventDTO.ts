@@ -5,7 +5,10 @@ export class CreateEventDTO {
   public name: string;
   @Length(5, 255, { message: 'Description length is invalid' })
   public description: string;
-  @IsDateString()
+  @IsDateString(
+    { strict: false, strictSeparator: false },
+    { message: 'Date format is invalid' },
+  )
   public when: string;
   @Length(5, 255, { message: 'Address length is invalid' })
   public address: string;
