@@ -114,7 +114,7 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
-    if (entity.organizer.id !== organizer.id) {
+    if (entity.organizerId !== organizer.id) {
       throw new ForbiddenException(
         'You are not authorized to change this event',
       );
