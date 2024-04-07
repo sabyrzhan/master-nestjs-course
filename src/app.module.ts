@@ -16,7 +16,11 @@ import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ envFilePath: 'env/.env' }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      expandVariables: true,
+      envFilePath: `env/${process.env.NODE_ENV}.env`,
+    }),
     TypeOrmModule.forRoot({
       type: 'mariadb',
       host: process.env['DB_HOST'],
@@ -27,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
       synchronize: process.env['DB_SYNCHRONIZE'] === 'true',
       entities: [Attendee, Event, Subject, Teacher, Profile, User],
       autoLoadEntities: true,
+      dropSchema: process.env['DB_DROP_SCHEMA'] == 'true',
     }),
     AuthModule,
     EventsModule,
