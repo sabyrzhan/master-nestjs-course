@@ -8,8 +8,21 @@ import { User } from '../../auth/entity/User';
 describe('EventsService', () => {
   let service: EventsService;
   let repository: Repository<Event>;
+  let selectQueryBuilder: any;
+  let deleteQueryBuilder: any;
 
   beforeEach(async () => {
+    deleteQueryBuilder = {
+      where: jest.fn(),
+      execute: jest.fn(),
+    };
+    selectQueryBuilder = {
+      delete: jest.fn().mockReturnValue(deleteQueryBuilder),
+      where: jest.fn(),
+      execute: jest.fn(),
+      orderBy: jest.fn(),
+      leftJoinAndSelect: jest.fn(),
+    };
     const module = await Test.createTestingModule({
       providers: [
         EventsService,
@@ -18,8 +31,8 @@ describe('EventsService', () => {
           useValue: {
             save: jest.fn(),
             findOneBy: jest.fn(),
-            createQueryBuilder: jest.fn(),
-            delete: jest.fn(),
+            createQueryBuilder: jest.fn().mockReturnValue(selectQueryBuilder),
+            delete: jest.fn().mockResolvedValue(deleteQueryBuilder),
             where: jest.fn(),
             execute: jest.fn(),
           },
@@ -33,11 +46,11 @@ describe('EventsService', () => {
 
   describe('updateEvent', () => {
     it('should update event', async () => {
-      const repoFindOneBySpy = jest
+      jest
         .spyOn(repository, 'findOneBy')
         .mockResolvedValue(new Event({ id: 1 }));
 
-      const repoSaveSpy = jest
+      jest
         .spyOn(repository, 'save')
         .mockResolvedValue(new Event({ id: 1, name: 'New name' }));
 
@@ -50,6 +63,28 @@ describe('EventsService', () => {
           new User(),
         ),
       ).toEqual(new Event({ id: 1, name: 'New name' }));
+    });
+  });
+  describe('deleteEvent', () => {
+    it('should delete event with id', async () => {
+      const createQueryBuilderSpy = jest.spyOn(
+        repository,
+        'createQueryBuilder',
+      );
+      const deleteQueryBuilderSpy = jest.spyOn(selectQueryBuilder, 'delete');
+      const whereSpy = jest
+        .spyOn(deleteQueryBuilder, 'where')
+        .mockReturnValue(deleteQueryBuilder);
+      const executeSpy = jest.spyOn(deleteQueryBuilder, 'execute');
+
+      expect(await service.deleteEvent(1)).toBe(undefined);
+
+      expect(createQueryBuilderSpy).toHaveBeenCalledTimes(1);
+      expect(createQueryBuilderSpy).toHaveBeenCalledWith('e');
+      expect(deleteQueryBuilderSpy).toHaveBeenCalled();
+      expect(whereSpy).toHaveBeenCalled();
+      expect(whereSpy).toHaveBeenCalledWith('id = :id', { id: 1 });
+      expect(executeSpy).toHaveBeenCalled();
     });
   });
 });
