@@ -4,14 +4,19 @@ import { Event } from '../entity/Event';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../../auth/entity/User';
+import { paginate } from '../pagination/paginator';
+
+jest.mock('../pagination/paginator');
 
 describe('EventsService', () => {
   let service: EventsService;
   let repository: Repository<Event>;
   let selectQueryBuilder: any;
   let deleteQueryBuilder: any;
+  let mockPaginate: any;
 
   beforeEach(async () => {
+    mockPaginate = paginate as jest.Mock;
     deleteQueryBuilder = {
       where: jest.fn(),
       execute: jest.fn(),
@@ -85,6 +90,53 @@ describe('EventsService', () => {
       expect(whereSpy).toHaveBeenCalled();
       expect(whereSpy).toHaveBeenCalledWith('id = :id', { id: 1 });
       expect(executeSpy).toHaveBeenCalled();
+    });
+  });
+  describe('getEventsAttendedByUserIdPaginated', () => {
+    it('should return list of paginated events', async () => {
+      const orderBySpy = jest
+        .spyOn(selectQueryBuilder, 'orderBy')
+        .mockReturnValue(selectQueryBuilder);
+      const leftJoinSpy = jest
+        .spyOn(selectQueryBuilder, 'leftJoinAndSelect')
+        .mockReturnValue(selectQueryBuilder);
+
+      const whereSpy = jest
+        .spyOn(selectQueryBuilder, 'where')
+        .mockReturnValue(selectQueryBuilder);
+      mockPaginate.mockResolvedValue({
+        first: 1,
+        last: 1,
+        total: 10,
+        limit: 10,
+        data: [],
+      });
+
+      expect(
+        await service.getEventsAttendedByUserIdPaginated(500, {
+          limit: 1,
+          currentPage: 1,
+        }),
+      ).toEqual({
+        first: 1,
+        last: 1,
+        total: 10,
+        limit: 10,
+        data: [],
+      });
+      expect(orderBySpy).toHaveBeenCalledTimes(1);
+      expect(orderBySpy).toHaveBeenCalledWith('e.id', 'DESC');
+      expect(leftJoinSpy).toHaveBeenCalledTimes(1);
+      expect(leftJoinSpy).toHaveBeenCalledWith('e.attendees', 'a');
+      expect(whereSpy).toHaveBeenCalledTimes(1);
+      expect(whereSpy).toHaveBeenCalledWith('a.userId = :userId', {
+        userId: 500,
+      });
+      expect(mockPaginate).toHaveBeenCalledTimes(1);
+      expect(mockPaginate).toHaveBeenCalledWith(selectQueryBuilder, {
+        currentPage: 1,
+        limit: 1,
+      });
     });
   });
 });

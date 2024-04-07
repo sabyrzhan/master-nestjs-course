@@ -167,7 +167,7 @@ export class EventsService {
   ): SelectQueryBuilder<Event> {
     return this.getEventsBaseQuery()
       .leftJoinAndSelect('e.attendees', 'a')
-      .where('a.user_id', { userId });
+      .where('a.userId = :userId', { userId });
   }
 
   private getEventsWithAttendeeCountFilteredQuery(
